@@ -153,3 +153,6 @@ dist/
 
 # Sensitive development fund keys
 dev_fund_*.pem
+
+# Confidential backup instructions
+BACKUP-INSTRUCTIONS.md
