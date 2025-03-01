@@ -30,3 +30,18 @@ BITCOIN_MP_NODE_NAME=paperclips-node
 BITCOIN_MP_GUI_NAME=paperclips-gui
 
 dnl Unless the user specified ARFLAGS, force it to be cr
+AC_SUBST(ARFLAGS)
+
+AC_CANONICAL_HOST
+
+AM_INIT_AUTOMAKE([no-define subdir-objects foreign])
+
+AC_PROG_CXX
+AC_PROG_CC
+AC_PROG_MAKE_SET
+
+LT_INIT([pic-only])
+
+AC_OUTPUT([
+  Makefile
+])
