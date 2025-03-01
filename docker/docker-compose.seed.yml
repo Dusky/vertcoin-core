@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  paperclips-seed:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.seed
+    container_name: paperclips-seed-${NETWORK:-mainnet}
+    restart: unless-stopped
+    ports:
+      - "5889:5889"  # P2P port
+    volumes:
+      - paperclips-seed-data:/root/.paperclips
+    environment:
+      - NETWORK=${NETWORK:-mainnet}  # Options: mainnet, testnet, signet
+    command: >
+      --printtoconsole
+      --${NETWORK:-mainnet}
+      --listen=1
+      --discover=1
+      --dnsseed=1
+      --listenonion=0
+      --maxconnections=256
+      --disablewallet
+
+volumes:
+  paperclips-seed-data:
+    name: paperclips-seed-${NETWORK:-mainnet}-data

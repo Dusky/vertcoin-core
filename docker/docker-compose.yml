@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  paperclips-node:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: paperclips-node
+    restart: unless-stopped
+    ports:
+      - "5889:5889"  # P2P port
+      - "5888:5888"  # RPC port
+    volumes:
+      - paperclips-data:/root/.paperclips
+    environment:
+      - NETWORK=${NETWORK:-mainnet}  # Options: mainnet, testnet, signet, regtest
+
+  # Optional block explorer service
+  explorer:
+    image: nginx:alpine
+    container_name: paperclips-explorer
+    depends_on:
+      - paperclips-node
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./explorer-config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./explorer-config/html:/usr/share/nginx/html:ro
+    environment:
+      - RPC_HOST=paperclips-node
+      - RPC_PORT=5888
+      - RPC_USER=paperclipsrpc
+      - RPC_PASSWORD=${RPC_PASSWORD}
+
+volumes:
+  paperclips-data:
+    name: paperclips-${NETWORK:-mainnet}-data

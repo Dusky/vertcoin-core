@@ -1,0 +1,88 @@
+FROM ubuntu:22.04
+
+LABEL maintainer="Paperclips Core Team"
+LABEL description="Paperclips Core Seed Node in Docker"
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libtool \
+    autotools-dev \
+    automake \
+    pkg-config \
+    libssl-dev \
+    libevent-dev \
+    bsdmainutils \
+    libboost-system-dev \
+    libboost-filesystem-dev \
+    libboost-chrono-dev \
+    libboost-program-options-dev \
+    libboost-test-dev \
+    libboost-thread-dev \
+    libminiupnpc-dev \
+    libzmq3-dev \
+    git \
+    curl \
+    wget \
+    jq \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /opt/paperclips
+
+# Copy source files (assumes this is run from the root of the project)
+COPY . .
+
+# Build Paperclips with only seed node functionality
+RUN ./autogen.sh && \
+    ./configure --disable-wallet --disable-tests --disable-bench --disable-gui --disable-zmq && \
+    make -j$(nproc) && \
+    make install
+
+# Create data directory
+RUN mkdir -p /root/.paperclips/
+
+# Create a base config file with safe defaults for a seed node
+RUN echo "rpcuser=paperclipsrpc\n\
+rpcpassword=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)\n\
+rpcallowip=127.0.0.1\n\
+server=1\n\
+daemon=0\n\
+listen=1\n\
+discover=1\n\
+maxconnections=256\n\
+disablewallet=1\n\
+" > /root/.paperclips/paperclips.conf
+
+# Expose only the P2P port
+EXPOSE 5889
+
+# Set volume for blockchain data
+VOLUME ["/root/.paperclips"]
+
+# Create entrypoint script with network selection
+RUN echo '#!/bin/bash\n\
+NETWORK="${NETWORK:-mainnet}"\n\
+\n\
+if [[ "$NETWORK" == "testnet" ]]; then\n\
+  echo "testnet=1" >> /root/.paperclips/paperclips.conf\n\
+  echo "Starting Paperclips in TESTNET mode"\n\
+elif [[ "$NETWORK" == "signet" ]]; then\n\
+  echo "signet=1" >> /root/.paperclips/paperclips.conf\n\
+  echo "Starting Paperclips in SIGNET mode"\n\
+elif [[ "$NETWORK" == "regtest" ]]; then\n\
+  echo "regtest=1" >> /root/.paperclips/paperclips.conf\n\
+  echo "Starting Paperclips in REGTEST mode"\n\
+else\n\
+  echo "Starting Paperclips in MAINNET mode"\n\
+fi\n\
+\n\
+exec paperclipsd -datadir=/root/.paperclips "$@"\n\
+' > /entrypoint.sh && chmod +x /entrypoint.sh
+
+# Set entrypoint
+ENTRYPOINT ["/entrypoint.sh"]
+
+# Default command
+CMD ["--printtoconsole"]

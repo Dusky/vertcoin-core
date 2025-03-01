@@ -124,7 +124,7 @@ void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent)
     widget->setFont(fixedPitchFont());
     // We don't want translators to use own addresses in translations
     // and this is the only place, where this address is supplied.
-    widget->setPlaceholderText(QObject::tr("Enter a Vertcoin address (e.g. %1)").arg(
+    widget->setPlaceholderText(QObject::tr("Enter a Paperclips address (e.g. %1)").arg(
         QString::fromStdString(DummyAddress(Params()))));
     widget->setValidator(new BitcoinAddressEntryValidator(parent));
     widget->setCheckValidator(new BitcoinAddressCheckValidator(parent));
@@ -137,8 +137,8 @@ void AddButtonShortcut(QAbstractButton* button, const QKeySequence& shortcut)
 
 bool parseBitcoinURI(const QUrl &uri, SendCoinsRecipient *out)
 {
-    // return if URI is not valid or is no bitcoin: URI
-    if(!uri.isValid() || uri.scheme() != QString("vertcoin"))
+    // return if URI is not valid or is no paperclips: URI
+    if(!uri.isValid() || uri.scheme() != QString("paperclips"))
         return false;
 
     SendCoinsRecipient rv;
@@ -202,7 +202,7 @@ QString formatBitcoinURI(const SendCoinsRecipient &info)
 {
     bool bech_32 = info.address.startsWith(QString::fromStdString(Params().Bech32HRP() + "1"));
 
-    QString ret = QString("vertcoin:%1").arg(bech_32 ? info.address.toUpper() : info.address);
+    QString ret = QString("paperclips:%1").arg(bech_32 ? info.address.toUpper() : info.address);
     int paramCount = 0;
 
     if (info.amount)
@@ -502,10 +502,10 @@ fs::path static StartupShortcutPath()
 {
     std::string chain = gArgs.GetChainName();
     if (chain == CBaseChainParams::MAIN)
-        return GetSpecialFolderPath(CSIDL_STARTUP) / "Vertcoin.lnk";
+        return GetSpecialFolderPath(CSIDL_STARTUP) / "Paperclips.lnk";
     if (chain == CBaseChainParams::TESTNET) // Remove this special case when CBaseChainParams::TESTNET = "testnet4"
-        return GetSpecialFolderPath(CSIDL_STARTUP) / "Vertcoin (testnet).lnk";
-    return GetSpecialFolderPath(CSIDL_STARTUP) / strprintf("Vertcoin (%s).lnk", chain);
+        return GetSpecialFolderPath(CSIDL_STARTUP) / "Paperclips (testnet).lnk";
+    return GetSpecialFolderPath(CSIDL_STARTUP) / strprintf("Paperclips (%s).lnk", chain);
 }
 
 bool GetStartOnSystemStartup()
@@ -585,8 +585,8 @@ fs::path static GetAutostartFilePath()
 {
     std::string chain = gArgs.GetChainName();
     if (chain == CBaseChainParams::MAIN)
-        return GetAutostartDir() / "vertcoin.desktop";
-    return GetAutostartDir() / strprintf("vertcoin-%s.desktop", chain);
+        return GetAutostartDir() / "paperclips.desktop";
+    return GetAutostartDir() / strprintf("paperclips-%s.desktop", chain);
 }
 
 bool GetStartOnSystemStartup()
@@ -626,13 +626,13 @@ bool SetStartOnSystemStartup(bool fAutoStart)
         if (!optionFile.good())
             return false;
         std::string chain = gArgs.GetChainName();
-        // Write a bitcoin.desktop file to the autostart directory:
+        // Write a paperclips.desktop file to the autostart directory:
         optionFile << "[Desktop Entry]\n";
         optionFile << "Type=Application\n";
         if (chain == CBaseChainParams::MAIN)
-            optionFile << "Name=Vertcoin\n";
+            optionFile << "Name=Paperclips\n";
         else
-            optionFile << strprintf("Name=Vertcoin (%s)\n", chain);
+            optionFile << strprintf("Name=Paperclips (%s)\n", chain);
         optionFile << "Exec=" << pszExePath << strprintf(" -min -chain=%s\n", chain);
         optionFile << "Terminal=false\n";
         optionFile << "Hidden=false\n";

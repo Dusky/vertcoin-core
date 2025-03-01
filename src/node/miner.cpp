@@ -161,9 +161,37 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     CMutableTransaction coinbaseTx;
     coinbaseTx.vin.resize(1);
     coinbaseTx.vin[0].prevout.SetNull();
-    coinbaseTx.vout.resize(1);
-    coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
-    coinbaseTx.vout[0].nValue = nFees + GetBlockSubsidy(nHeight, chainparams.GetConsensus());
+    
+    // Paperclips: Add the dev fee (1% of transaction fees)
+    CAmount blockReward = GetBlockSubsidy(nHeight, chainparams.GetConsensus());
+    CAmount minerReward = nFees + blockReward;
+    CAmount devFee = nFees * 1 / 100; // 1% of fees to dev fund
+    
+    // Adjust miner reward
+    minerReward -= devFee;
+    
+    // Paperclips: Size of vout depends on whether we're paying a dev fee
+    if (devFee > 0) {
+        coinbaseTx.vout.resize(2);
+        
+        // Output 0: Miner reward
+        coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
+        coinbaseTx.vout[0].nValue = minerReward;
+        
+        // Output 1: Dev fund - hardcoded development fund address
+        // This is a Paperclips address that starts with 'C'
+        // Replace with your actual dev fund address for Paperclips
+        std::string devFundAddress = "CLjEEfP6BqcRUCPpfCjKDELZKnUwa2hPJJ"; // Replace with your actual address
+        CScript devFundScript = GetScriptForDestination(DecodeDestination(devFundAddress));
+        coinbaseTx.vout[1].scriptPubKey = devFundScript;
+        coinbaseTx.vout[1].nValue = devFee;
+    } else {
+        // No dev fee to pay
+        coinbaseTx.vout.resize(1);
+        coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
+        coinbaseTx.vout[0].nValue = minerReward;
+    }
+    
     coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
     pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
     pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());

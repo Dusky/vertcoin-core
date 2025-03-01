@@ -19,7 +19,7 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
 {
     static CBigNum              bnProofOfWorkLimit(params.powLimit);
     static CBigNum              bnPreVerthashProofOfWorkLimit(params.preVerthashPowLimit);
-    static const int64_t        BlocksTargetSpacing  = 2.5 * 60; // 2.5 minutes
+    static const int64_t        BlocksTargetSpacing  = 3 * 60; // 3 minutes for Paperclips
     unsigned int                TimeDaySeconds       = 60 * 60 * 24;
     int64_t                     PastSecondsMin       = TimeDaySeconds * 0.25;
     int64_t                     PastSecondsMax       = TimeDaySeconds * 7;
@@ -28,6 +28,54 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
 
     const int nHeight = pindexLast->nHeight + 1;
 
+    // Paperclips: Set this to true after launch to enable difficulty adjustment every 20 blocks
+    bool isPaperclips = true;
+    
+    if (isPaperclips) {
+        // For Paperclips, adjust difficulty every 20 blocks
+        const int nPaperclipsAdjustmentInterval = 20;
+        
+        if ((nHeight) % nPaperclipsAdjustmentInterval == 0)
+        {
+            // Go back by 20 blocks
+            const CBlockIndex* pindexFirst = pindexLast;
+            for (int i = 0; pindexFirst && i < nPaperclipsAdjustmentInterval-1; i++)
+                pindexFirst = pindexFirst->pprev;
+                
+            if (pindexFirst) {
+                // Calculate new difficulty
+                arith_uint256 bnNew;
+                arith_uint256 bnOld;
+                bnNew.SetCompact(pindexLast->nBits);
+                bnOld = bnNew;
+                
+                // Calculate time span between blocks
+                int64_t nActualTimespan = pindexLast->GetBlockTime() - pindexFirst->GetBlockTime();
+                int64_t nTargetTimespan = BlocksTargetSpacing * nPaperclipsAdjustmentInterval;
+                
+                // Apply dampening to avoid drastic changes
+                if (nActualTimespan < nTargetTimespan/4)
+                    nActualTimespan = nTargetTimespan/4;
+                if (nActualTimespan > nTargetTimespan*4)
+                    nActualTimespan = nTargetTimespan*4;
+                
+                // Adjust difficulty
+                bnNew *= nActualTimespan;
+                bnNew /= nTargetTimespan;
+                
+                // Make sure we don't go below or above limits
+                if (bnNew > CBigNum(params.powLimit))
+                    bnNew = CBigNum(params.powLimit);
+                
+                return bnNew.GetCompact();
+            }
+        }
+        
+        // If we're not at a difficulty adjustment point, return the last difficulty
+        return pindexLast->nBits;
+    }
+    
+    // Original Vertcoin code for backwards compatibility
     if(Params().NetworkIDString() == CBaseChainParams::MAIN) {
         if(nHeight < 26754) {
             return GetNextWorkRequired_Bitcoin(pindexLast, pblock, params);

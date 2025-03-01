@@ -1,6 +1,8 @@
-# List of fixed seed nodes for testnet
-188.182.153.82:15889
-47.199.196.228:15889
-47.144.8.132:15889
-66.94.106.235:15889
+# List of fixed seed nodes for Paperclips testnet
+# These would be actual testnet servers in a real implementation
+# Examples:
+test1.paperclips.network:15889
+test2.paperclips.network:15889
+testseed1.paperclips.network:15889
+testseed2.paperclips.network:15889
 

@@ -1419,14 +1419,21 @@ PackageMempoolAcceptResult ProcessNewPackage(CChainState& active_chainstate, CTx
 
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
-    int halvings = nHeight / consensusParams.nSubsidyHalvingInterval;
-    // Force block reward to zero when right shift is undefined.
-    if (halvings >= 64)
+    // Paperclips uses a 20% reduction every 2 years (350,400 blocks) instead of halving
+    int reductions = nHeight / consensusParams.nSubsidyReductionInterval;
+    
+    // Force block reward to zero after many reductions
+    if (reductions >= 64)
         return 0;
 
-    CAmount nSubsidy = 50 * COIN;
-    // Subsidy is cut in half every 840,000 blocks which will occur approximately every 4 years.
-    nSubsidy >>= halvings;
+    // Initial subsidy is 8,000 CLIP per block
+    CAmount nSubsidy = 8000 * COIN;
+    
+    // Calculate reduction: 0.8^reductions * initial subsidy
+    for (int i = 0; i < reductions; i++) {
+        nSubsidy = nSubsidy * 4 / 5; // Multiply by 0.8 (20% reduction)
+    }
+    
     return nSubsidy;
 }
 
