@@ -150,3 +150,6 @@ osx_volname
 dist/
 
 /guix-build-*
+
+# Sensitive development fund keys
+dev_fund_*.pem
