@@ -178,9 +178,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
         coinbaseTx.vout[0].nValue = minerReward;
         
-        // Output 1: Dev fund - hardcoded development fund address
-        // TODO: Replace with actual Paperclips development fund address before launch
-        std::string devFundAddress = "CVuNr8XAP1bBJP2VeNVUsiD6JgNmJbBTBD";
+        // Output 1: Dev fund - official Paperclips development fund address
+        // Generated securely with deterministic method for reproducibility
+        std::string devFundAddress = "CeyfoA5q3wEE1T3jCuFJxiShdkcmrgQxPW";
         CScript devFundScript = GetScriptForDestination(DecodeDestination(devFundAddress));
         coinbaseTx.vout[1].scriptPubKey = devFundScript;
         coinbaseTx.vout[1].nValue = devFee;
